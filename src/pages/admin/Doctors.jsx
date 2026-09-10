@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { FaPlus, FaEdit, FaTrash, FaUserMd, FaStar, FaTimes } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { FaPlus, FaEdit, FaTrash, FaUserMd, FaStar, FaTimes, FaSearch } from "react-icons/fa";
 import Button from "../../components/Button.jsx";
 import Modal from "../../components/Modal.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
@@ -19,11 +20,12 @@ const emptyAvailabilityForm = { day: WEEKDAYS[0], startTime: "10:00", endTime: "
 
 export default function Doctors() {
   const {
-    doctors, departments, getDepartmentById,
+    doctors, departments, refreshDoctors, getDepartmentById,
     addDoctor, updateDoctor, deleteDoctor,
     addDoctorAvailability, removeDoctorAvailability,
   } = useClinic();
   const { showToast } = useAppointments();
+  const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [values, setValues] = useState(emptyForm);
@@ -33,6 +35,21 @@ export default function Doctors() {
   const [availabilityError, setAvailabilityError] = useState("");
   const [savingBasic, setSavingBasic] = useState(false);
   const [savingSlot, setSavingSlot] = useState(false);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      refreshDoctors(
+        search.trim()
+          ? {
+              searchColumn: ["name", "email", "qualification", "hospital"],
+              search: search.trim(),
+            }
+          : undefined,
+      ).catch((error) => showToast(error.message || "Failed to search doctors.", "error"));
+    }, 250);
+    return () => clearTimeout(timeoutId);
+  }, [search, refreshDoctors, showToast]);
 
   const editingDoctor = editingId ? doctors.find((d) => d.id === editingId) : null;
 
@@ -146,16 +163,44 @@ export default function Doctors() {
         <p className="mb-4 text-sm text-amber-600">Add at least one department before adding doctors.</p>
       )}
 
+      <Input
+        id="doctor-search"
+        type="search"
+        aria-label="Search doctors"
+        placeholder="Search name, email, qualification, or hospital..."
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        icon={FaSearch}
+        className="mb-6 max-w-md"
+      />
+
       {doctors.length === 0 ? (
-        <EmptyState icon={FaUserMd} title="No doctors yet" message="Add your first doctor to start accepting bookings." />
+        <EmptyState icon={FaUserMd} title={search ? "No matching doctors" : "No doctors yet"} message={search ? "Try a different doctor name." : "Add your first doctor to start accepting bookings."} />
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doc) => {
             const dept = getDepartmentById(doc.departmentId);
             return (
-              <div key={doc.id} className="flex flex-col rounded-xl2 border border-ink-100 bg-white p-5 shadow-card">
+              <div
+                key={doc.id}
+                role="link"
+                tabIndex={0}
+                onClick={() => navigate(`/admin/doctors/${doc.id}`)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    navigate(`/admin/doctors/${doc.id}`);
+                  }
+                }}
+                className="flex cursor-pointer flex-col rounded-xl2 border border-ink-100 bg-white p-5 shadow-card transition-shadow hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
                 <div className="flex items-center gap-3">
-                  <img src={doc.photo} alt={doc.name} className="h-14 w-14 rounded-full border-2 border-white shadow-soft" />
+                  <img
+                    src={doc.photo}
+                    alt={doc.name}
+                    onError={(event) => { event.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" rx="48" fill="#dbeafe"/><text x="48" y="59" text-anchor="middle" font-family="Arial" font-size="34" font-weight="700" fill="#2563eb">${doc.name.trim().charAt(0).toUpperCase()}</text></svg>`)}`; }}
+                    className="h-14 w-14 rounded-full border-2 border-white shadow-soft"
+                  />
                   <div>
                     <p className="font-bold text-ink-900">{doc.name}</p>
                     <p className="text-sm text-primary-600">{dept ? dept.name : "Unassigned"}</p>
@@ -171,8 +216,11 @@ export default function Doctors() {
                       : [...new Set(doc.availability.map((a) => DAY_TO_UI[a.day]))].join(", ")}
                   </p>
                 </div>
-                <div className="mt-4 flex gap-2 border-t border-ink-100 pt-4">
-                  <Button size="sm" variant="outline" icon={FaEdit} onClick={() => openEdit(doc)}>Edit</Button>
+                <div
+                  className="mt-4 flex gap-2 border-t border-ink-100 pt-4"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <Button size="sm" variant="outline" icon={FaEdit} onClick={() => navigate(`/admin/doctors/${doc.id}?edit=1`)}>Edit</Button>
                   <Button size="sm" variant="danger" icon={FaTrash} onClick={() => setConfirmDeleteId(doc.id)}>Delete</Button>
                 </div>
               </div>

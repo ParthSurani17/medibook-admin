@@ -8,7 +8,7 @@ export default function AdminLayout() {
     <div className="flex min-h-screen bg-ink-50/60 font-body text-ink-800">
       <ScrollToTopOnNavigate />
       <Sidebar />
-      <main className="flex-1 overflow-x-hidden">
+      <main className="min-w-0 flex-1 overflow-x-hidden">
         <Outlet />
       </main>
       <Toast />

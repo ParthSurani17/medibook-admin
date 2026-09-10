@@ -9,7 +9,10 @@ export const authApi = {
   login: (email: string, password: string) =>
     http.post<LoginResponse>("/admin/auth/login", { email, password }),
   forgotPassword: (email: string) =>
-    http.post<ApiMessageResponse>("/api/auth/forgot-password", { email }),
+    http.post<ApiMessageResponse>("/api/auth/forgot-password", {
+      email,
+      resetUrlBase: `${window.location.origin}/reset-password`,
+    }),
   resetPassword: (token: string, newPassword: string) =>
     http.post<ApiMessageResponse>("/api/auth/reset-password", { token, newPassword }),
   getProfile: () => http.get<AdminProfileResponse>("/admin/profile"),

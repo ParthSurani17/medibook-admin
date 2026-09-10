@@ -5,6 +5,7 @@ import Button from "../../components/Button";
 import Modal from "../../components/Modal";
 import EmptyState from "../../components/EmptyState";
 import { Input, Select } from "../../components/Input";
+import { uploadDoctorPhoto } from "../../api/doctors";
 import { useClinic } from "../../context/ClinicContext";
 import { useAppointments } from "../../context/AppointmentContext";
 import { WEEKDAYS } from "../../data/seed";
@@ -17,10 +18,13 @@ const avatar = (seed: string): string =>
 
 interface DoctorFormValues {
   name: string;
+  email: string;
   departmentId: string;
   qualification: string;
+  hospital: string;
   experience: number | string;
   fee: number | string;
+  photo: string;
 }
 
 interface AvailabilityFormValues {
@@ -32,10 +36,13 @@ interface AvailabilityFormValues {
 
 const emptyForm: DoctorFormValues = {
   name: "",
+  email: "",
   departmentId: "",
   qualification: "",
+  hospital: "",
   experience: "",
   fee: "",
+  photo: "",
 };
 const emptyAvailabilityForm: AvailabilityFormValues = {
   day: WEEKDAYS[0],
@@ -68,6 +75,7 @@ export default function Doctors() {
   const [availabilityError, setAvailabilityError] = useState("");
   const [savingBasic, setSavingBasic] = useState(false);
   const [savingSlot, setSavingSlot] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const editingDoctor = editingId ? doctors.find((d) => d.id === editingId) : null;
 
@@ -92,10 +100,13 @@ export default function Doctors() {
     setEditingId(doc.id);
     setValues({
       name: doc.name,
+      email: doc.email || "",
       departmentId: doc.departmentId || "",
       qualification: doc.qualification || "",
+      hospital: doc.hospital || "",
       experience: doc.experience ?? "",
       fee: doc.fee ?? "",
+      photo: doc.photo || "",
     });
     setErrors({});
     setModalOpen(true);
@@ -105,6 +116,9 @@ export default function Doctors() {
     e.preventDefault();
     const newErrors: FormErrors = {};
     if (!values.name.trim()) newErrors.name = "Please enter the doctor's name.";
+    if (values.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+      newErrors.email = "Please enter a valid email address.";
+    }
     if (!values.departmentId) newErrors.departmentId = "Please select a department.";
     if (!values.qualification.trim()) newErrors.qualification = "Please enter a qualification.";
     if (!values.experience || Number(values.experience) < 0)
@@ -116,10 +130,13 @@ export default function Doctors() {
 
     const payload = {
       name: values.name.trim(),
+      email: values.email.trim() || undefined,
       departmentId: values.departmentId,
       qualification: values.qualification.trim(),
+      hospital: values.hospital.trim() || undefined,
       experience: Number(values.experience),
       fee: Number(values.fee),
+      photo: values.photo || undefined,
     };
 
     setSavingBasic(true);
@@ -128,7 +145,7 @@ export default function Doctors() {
         await updateDoctor(editingId, payload);
         showToast("Doctor updated.", "success");
       } else {
-        const created = await addDoctor({ ...payload, photo: avatar(values.name) });
+        const created = await addDoctor({ ...payload, photo: values.photo || avatar(values.name) });
         showToast("Doctor added — now add their weekly availability below.", "success");
         // Switch straight into edit mode for the doctor we just created so
         // the admin can add availability windows without reopening the modal.
@@ -178,6 +195,21 @@ export default function Doctors() {
       showToast("Availability window removed.", "info");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Failed to remove availability.", "error");
+    }
+  };
+
+  const handlePhotoUpload = async (file?: File) => {
+    if (!file || !editingId) return;
+
+    setUploadingPhoto(true);
+    try {
+      const uploaded = await uploadDoctorPhoto(editingId, file);
+      setValues((p) => ({ ...p, photo: uploaded.url }));
+      showToast("Doctor photo uploaded.", "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Photo upload failed.", "error");
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
@@ -279,6 +311,17 @@ export default function Doctors() {
             }
             error={errors.name}
           />
+          <Input
+            id="doc-email"
+            type="email"
+            label="Doctor Email"
+            placeholder="doctor@example.com"
+            value={values.email}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setValues((p) => ({ ...p, email: e.target.value }))
+            }
+            error={errors.email}
+          />
           <Select
             id="doc-dept"
             label="Department"
@@ -302,6 +345,15 @@ export default function Doctors() {
             }
             error={errors.qualification}
           />
+          <Input
+            id="doc-hospital"
+            label="Hospital / Clinic"
+            placeholder="e.g. MediBook City Clinic"
+            value={values.hospital}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setValues((p) => ({ ...p, hospital: e.target.value }))
+            }
+          />
           <div className="grid grid-cols-2 gap-4">
             <Input
               id="doc-exp"
@@ -323,6 +375,28 @@ export default function Doctors() {
               }
               error={errors.fee}
             />
+          </div>
+
+          <div>
+            <label htmlFor="doc-photo" className="mb-1.5 block text-sm font-medium text-ink-700">
+              Doctor Photo
+            </label>
+            <div className="flex items-center gap-3">
+              <img
+                src={values.photo || avatar(values.name || "Doctor")}
+                alt="Doctor preview"
+                className="h-14 w-14 rounded-full border border-ink-100 object-cover"
+              />
+              <input
+                id="doc-photo"
+                type="file"
+                accept="image/*"
+                onChange={(e: ChangeEvent<HTMLInputElement>) => handlePhotoUpload(e.target.files?.[0])}
+                className="w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-800 file:mr-3 file:rounded-full file:border-0 file:bg-primary-50 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-primary-700"
+                disabled={uploadingPhoto}
+              />
+            </div>
+            {uploadingPhoto && <p className="mt-1.5 text-xs font-medium text-ink-500">Uploading photo...</p>}
           </div>
 
           <div className="flex justify-end gap-3 pt-1">

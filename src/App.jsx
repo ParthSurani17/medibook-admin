@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import Departments from "./pages/admin/Departments.jsx";
 import Doctors from "./pages/admin/Doctors.jsx";
+import DoctorDetails from "./pages/admin/DoctorDetails.tsx";
 import Patients from "./pages/admin/Patients.jsx";
 import AdminAppointments from "./pages/admin/AdminAppointments.jsx";
 import Testimonials from "./pages/admin/Testimonials.jsx";
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/departments" element={<Departments />} />
           <Route path="/admin/doctors" element={<Doctors />} />
+          <Route path="/admin/doctors/:id" element={<DoctorDetails />} />
           <Route path="/admin/patients" element={<Patients />} />
           <Route path="/admin/appointments" element={<AdminAppointments />} />
           <Route path="/admin/testimonials" element={<Testimonials />} />

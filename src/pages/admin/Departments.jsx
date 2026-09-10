@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FaPlus, FaEdit, FaTrash, FaHospitalAlt } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { FaPlus, FaEdit, FaTrash, FaHospitalAlt, FaSearch } from "react-icons/fa";
 import Button from "../../components/Button.jsx";
 import Modal from "../../components/Modal.jsx";
 import EmptyState from "../../components/EmptyState.jsx";
@@ -10,13 +10,25 @@ import { useAppointments } from "../../context/AppointmentContext.jsx";
 const emptyForm = { name: "", description: "" };
 
 export default function Departments() {
-  const { departments, doctors, addDepartment, updateDepartment, deleteDepartment } = useClinic();
+  const { departments, doctors, refreshDepartments, addDepartment, updateDepartment, deleteDepartment } = useClinic();
   const { showToast } = useAppointments();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [values, setValues] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      refreshDepartments(
+        search.trim()
+          ? { searchColumn: ["name", "description"], search: search.trim() }
+          : undefined,
+      ).catch((error) => showToast(error.message || "Failed to search departments.", "error"));
+    }, 250);
+    return () => clearTimeout(timeoutId);
+  }, [search, refreshDepartments, showToast]);
 
   const doctorCount = (deptId) => doctors.filter((d) => d.departmentId === deptId).length;
 
@@ -60,8 +72,19 @@ export default function Departments() {
         <Button onClick={openAdd} icon={FaPlus}>Add Department</Button>
       </div>
 
+      <Input
+        id="department-search"
+        type="search"
+        aria-label="Search departments"
+        placeholder="Search department name or description..."
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        icon={FaSearch}
+        className="mb-6 max-w-md"
+      />
+
       {departments.length === 0 ? (
-        <EmptyState icon={FaHospitalAlt} title="No departments yet" message="Add your first department or specialization to get started." />
+        <EmptyState icon={FaHospitalAlt} title={search ? "No matching departments" : "No departments yet"} message={search ? "Try a different department name." : "Add your first department or specialization to get started."} />
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {departments.map((dept) => (

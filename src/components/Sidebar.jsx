@@ -1,7 +1,7 @@
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import {
   FaHeartbeat, FaTachometerAlt, FaCalendarCheck, FaUserMd, FaHospitalAlt,
-  FaUsers, FaCommentDots, FaChartBar, FaBell, FaUserCog, FaSignOutAlt, FaBars, FaTimes,
+  FaUsers, FaUserCog, FaSignOutAlt, FaBars, FaTimes,
 } from "react-icons/fa";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -13,18 +13,14 @@ const LINKS = [
   { to: "/admin/doctors", label: "Doctors", icon: FaUserMd },
   { to: "/admin/patients", label: "Patients", icon: FaUsers },
   { to: "/admin/appointments", label: "Appointments", icon: FaCalendarCheck },
-  { to: "/admin/testimonials", label: "Testimonials", icon: FaCommentDots },
-  { to: "/admin/reports", label: "Reports", icon: FaChartBar },
-  { to: "/admin/notifications", label: "Notifications", icon: FaBell },
   { to: "/admin/profile", label: "Profile", icon: FaUserCog },
 ];
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
   const { currentUser, logout } = useAuth();
-  const { notifications, showToast } = useAppointments();
+  const { showToast } = useAppointments();
   const navigate = useNavigate();
-  const unread = notifications.filter((n) => !n.read).length;
 
   const handleLogout = () => {
     logout();
@@ -59,11 +55,6 @@ export default function Sidebar() {
           >
             <Icon className="text-base" />
             {label}
-            {label === "Notifications" && unread > 0 && (
-              <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">
-                {unread}
-              </span>
-            )}
           </NavLink>
         ))}
       </nav>
@@ -100,7 +91,7 @@ export default function Sidebar() {
       )}
 
       {/* Desktop sidebar */}
-      <div className="hidden w-64 shrink-0 lg:block">{content}</div>
+      <div className="sticky top-0 hidden h-screen w-64 shrink-0 self-start lg:block">{content}</div>
     </>
   );
 }

@@ -7,7 +7,7 @@ import type {
 } from "../types";
 
 export const appointmentsApi = {
-  list: () => http.get<PaginatedList<RawAppointment>>("/admin/appointments"),
+  list: () => http.get<PaginatedList<RawAppointment>>("/admin/appointments?take=100"),
   updateStatus: (id: string, status: ApiAppointmentStatus) =>
     http.patch<RawAppointment>(`/admin/appointments/${id}/status`, { status }),
   reschedule: (id: string, data: RescheduleAppointmentPayload) =>

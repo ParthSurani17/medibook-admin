@@ -14,13 +14,13 @@ export function ClinicProvider({ children }) {
   const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const refreshDepartments = useCallback(async () => {
-    const res = await departmentsApi.list();
+  const refreshDepartments = useCallback(async (params) => {
+    const res = await departmentsApi.list(params);
     setDepartments(res.list || []);
   }, []);
 
-  const refreshDoctors = useCallback(async () => {
-    const res = await doctorsApi.list();
+  const refreshDoctors = useCallback(async (params) => {
+    const res = await doctorsApi.list(params);
     setDoctors((res.list || []).map(mapDoctor));
   }, []);
 
@@ -126,8 +126,8 @@ export function ClinicProvider({ children }) {
 
   const value = {
     loading,
-    departments, addDepartment, updateDepartment, deleteDepartment, getDepartmentById,
-    doctors, addDoctor, updateDoctor, deleteDoctor, getDoctorById,
+    departments, refreshDepartments, addDepartment, updateDepartment, deleteDepartment, getDepartmentById,
+    doctors, refreshDoctors, addDoctor, updateDoctor, deleteDoctor, getDoctorById,
     addDoctorAvailability, removeDoctorAvailability,
     testimonials, addTestimonial, deleteTestimonial,
   };

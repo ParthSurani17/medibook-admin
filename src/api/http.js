@@ -20,9 +20,12 @@ export async function apiRequest(path, { method = "GET", body, params } = {}) {
   if (params && Object.keys(params).length > 0) {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        query.append(key, value);
-      }
+      const values = Array.isArray(value) ? value : [value];
+      values.forEach((item) => {
+        if (item !== undefined && item !== null && item !== "") {
+          query.append(key, item);
+        }
+      });
     });
     const qs = query.toString();
     if (qs) url += `?${qs}`;
@@ -66,6 +69,23 @@ export async function apiRequest(path, { method = "GET", body, params } = {}) {
   }
 
   return data;
+}
+
+// Fetch in pages within the API's 50-record maximum.
+export async function getList(path, limit, params = {}) {
+  const list = [];
+  let page;
+  do {
+    page = await apiRequest(path, {
+      params: {
+        ...params,
+        skip: list.length,
+        take: Math.min(50, limit - list.length),
+      },
+    });
+    list.push(...page.list);
+  } while (page.hasMany && page.list.length > 0 && list.length < limit);
+  return { ...page, list, count: list.length };
 }
 
 export const http = {

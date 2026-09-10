@@ -64,9 +64,12 @@ export interface DoctorAvailabilityWindow {
 export interface RawDoctor {
   id: UUID;
   name: string;
+  email?: string | null;
   photoUrl?: string | null;
+  photo?: string | null;
   departmentId: UUID;
   qualification?: string | null;
+  hospital?: string | null;
   experience?: number | null;
   fee: number;
   availability?: DoctorAvailabilityWindow[];
@@ -76,9 +79,11 @@ export interface RawDoctor {
 export interface Doctor {
   id: UUID;
   name: string;
+  email: string;
   photo: string;
   departmentId: UUID;
   qualification: string;
+  hospital: string;
   experience: number | "";
   fee: number | "";
   rating: number;
@@ -88,11 +93,14 @@ export interface Doctor {
 
 export interface CreateDoctorPayload {
   name: string;
+  email?: string;
   departmentId: string;
   qualification: string;
+  hospital?: string;
   experience: number;
   fee: number;
   photo?: string;
+  photoUrl?: string;
 }
 
 // ─── Appointments ───────────────────────────────────────

@@ -11,6 +11,9 @@ export const DAY_TO_UI = Object.fromEntries(
   Object.entries(DAY_TO_API).map(([full, short]) => [short, full])
 );
 
+const fallbackAvatar = (name) =>
+  `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" rx="48" fill="#dbeafe"/><text x="48" y="59" text-anchor="middle" font-family="Arial" font-size="34" font-weight="700" fill="#2563eb">${String(name || "D").trim().charAt(0).toUpperCase()}</text></svg>`)}`;
+
 // Maps between the backend's UPPERCASE enum statuses and the Title-Case
 // strings this UI (originally built against a localStorage mock) expects.
 const STATUS_TO_UI = {
@@ -64,15 +67,21 @@ export function mapAppointment(raw, doctorsById = {}) {
 export function mapDoctor(raw) {
   const availability = raw.availability || [];
   const days = [...new Set(availability.map((a) => a.day))];
+  const storedPhoto = raw.photoUrl || raw.photo ? String(raw.photoUrl || raw.photo) : "";
+  const photo = storedPhoto
+    ? /^https?:\/\//i.test(storedPhoto)
+      ? storedPhoto
+      : `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"}/${storedPhoto.replace(/^\/+/, "")}`
+    : fallbackAvatar(raw.name);
 
   return {
     id: raw.id,
     name: raw.name,
-    photo:
-      raw.photoUrl ||
-      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(raw.name)}&backgroundColor=b7d0ff,cdf5e3,eaf2ff`,
+    email: raw.email || "",
+    photo,
     departmentId: raw.departmentId,
     qualification: raw.qualification || "",
+    hospital: raw.hospital || "",
     experience: raw.experience ?? "",
     fee: raw.fee ?? "",
     rating: 4.5,
