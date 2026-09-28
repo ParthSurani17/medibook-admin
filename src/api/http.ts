@@ -29,8 +29,16 @@ export async function apiRequest<T = unknown>(
   let url = `${BASE_URL}${path}`;
 
   if (params && Object.keys(params).length > 0) {
+    const normalizedParams = { ...params };
+    if (normalizedParams.limit !== undefined) {
+      if (normalizedParams.take === undefined) {
+        normalizedParams.take = Math.min(50, Number(normalizedParams.limit));
+      }
+      delete normalizedParams.limit;
+    }
+
     const query = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
+    Object.entries(normalizedParams).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
         query.append(key, String(value));
       }

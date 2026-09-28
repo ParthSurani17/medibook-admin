@@ -18,8 +18,16 @@ export async function apiRequest(path, { method = "GET", body, params } = {}) {
   let url = `${BASE_URL}${path}`;
 
   if (params && Object.keys(params).length > 0) {
+    const normalizedParams = { ...params };
+    if (normalizedParams.limit !== undefined) {
+      if (normalizedParams.take === undefined) {
+        normalizedParams.take = Math.min(50, Number(normalizedParams.limit));
+      }
+      delete normalizedParams.limit;
+    }
+
     const query = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
+    Object.entries(normalizedParams).forEach(([key, value]) => {
       const values = Array.isArray(value) ? value : [value];
       values.forEach((item) => {
         if (item !== undefined && item !== null && item !== "") {
