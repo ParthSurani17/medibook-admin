@@ -27,6 +27,7 @@ export default function Departments() {
 
   const doctorCount = (deptId: string) =>
     doctors.filter((d) => d.departmentId === deptId).length;
+  const selectedDepartmentDoctorCount = confirmDeleteId ? doctorCount(confirmDeleteId) : 0;
 
   const openAdd = () => {
     setEditingId(null);
@@ -157,21 +158,34 @@ export default function Departments() {
         onClose={() => setConfirmDeleteId(null)}
         title="Delete this department?"
       >
-        <p>
-          Doctors currently in this department will become "Unassigned" rather than deleted. This
-          action cannot be undone.
-        </p>
+        {selectedDepartmentDoctorCount > 0 ? (
+          <p>
+            This department has {selectedDepartmentDoctorCount} assigned doctor
+            {selectedDepartmentDoctorCount !== 1 ? "s" : ""}. Move or delete those doctors before
+            deleting the department.
+          </p>
+        ) : (
+          <p>This action cannot be undone.</p>
+        )}
         <div className="mt-5 flex justify-end gap-3">
           <Button variant="ghost" onClick={() => setConfirmDeleteId(null)}>
             Keep it
           </Button>
           <Button
             variant="danger"
+            disabled={selectedDepartmentDoctorCount > 0}
             onClick={async () => {
               if (!confirmDeleteId) return;
-              await deleteDepartment(confirmDeleteId);
-              setConfirmDeleteId(null);
-              showToast("Department deleted.", "info");
+              try {
+                await deleteDepartment(confirmDeleteId);
+                setConfirmDeleteId(null);
+                showToast("Department deleted.", "info");
+              } catch (err) {
+                showToast(
+                  err instanceof Error ? err.message : "Failed to delete department.",
+                  "error"
+                );
+              }
             }}
           >
             Delete
