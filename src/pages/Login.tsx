@@ -74,9 +74,9 @@ export default function Login() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-ink-400">
+        {/* <p className="mt-6 text-center text-xs text-ink-400">
           Demo login: admin@medibook.demo / Admin@123 (or whatever ADMIN_EMAIL/ADMIN_PASSWORD you seeded the backend with)
-        </p>
+        </p> */}
       </div>
     </div>
   );
